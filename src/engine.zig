@@ -7,6 +7,7 @@ pub const State = struct {
 
     frame: *drawf.Frame,
 
+    player: *objectsf.Player,
     objects: std.ArrayList(Object),
 
     input: ?u8 = null,
@@ -20,14 +21,23 @@ pub const State = struct {
         const f = try allocator.create(drawf.Frame);
         f.* = drawf.Frame.init();
 
+        const p = try allocator.create(objectsf.Player);
+        p.* = objectsf.Player.init(
+            drawf.WIDTH / 2,
+            drawf.HEIGHT / 2,
+        );
+
         const st = try allocator.create(State);
         st.* = .{
             .allocator = allocator,
             .objects = std.ArrayList(Object).init(allocator),
             .frame = f,
+            .player = p,
             .frames_since = 0,
             .last_second = std.time.timestamp(),
         };
+
+        try st.spawn_object(Object{ .player = p });
 
         return st;
     }
@@ -50,14 +60,18 @@ pub const State = struct {
         }
 
         var i = self.objects.items.len - 1;
-        while (i > 0) : (i -= 1) {
+        while (true) {
             const obj = &self.objects.items[i];
+            std.debug.print("obj: {}", .{obj});
             if (obj.alive()) {
                 obj.draw(self.frame);
                 obj.update();
             } else {
                 _ = self.objects.swapRemove(i);
             }
+
+            if (i == 0) break;
+            i -= 1;
         }
     }
 
@@ -108,6 +122,7 @@ pub const State = struct {
 };
 
 pub const Object = union(enum) {
+    player: *objectsf.Player,
     explosion: *objectsf.Explosion,
 
     pub fn draw(self: Object, frame: *drawf.Frame) void {
