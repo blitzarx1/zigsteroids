@@ -4,17 +4,6 @@ const drawf = @import("draw.zig");
 const term = @import("term.zig");
 const input = @import("input.zig");
 const engine = @import("engine.zig");
-const objectsf = @import("objects.zig");
-
-// const Texture = union(enum) {
-//     explosion: Explosion,
-
-//     pub fn add_to_frame(self: Texture, frame: *Frame) void {
-//         switch (self) {
-//             i else => |tex| return tex.add_to_frame(frame),
-//         }
-//     }
-// };
 
 fn render(frame: *const drawf.Frame) !void {
     const stdout_file = std.io.getStdOut().writer();
@@ -24,6 +13,10 @@ fn render(frame: *const drawf.Frame) !void {
     try stdout.print("\x1b[2J", .{}); // clear screen
     try stdout.print("\x1b[H", .{}); // move cursor to top left corner
 
+    // print debug
+    try stdout.print("{s}\n", .{frame.debugline});
+
+    // print the world
     for (frame.vals) |row| {
         for (row) |sym| {
             var buf: [4]u8 = [_]u8{undefined} ** 4;
@@ -36,24 +29,7 @@ fn render(frame: *const drawf.Frame) !void {
 }
 
 pub fn update(state: *engine.State) !void {
-    std.time.sleep(100_000_000);
-
-    state.handle_input();
-    state.gen_frame();
-
-    state.frame_cnt += 1;
-
-    // add randim explosion
-    if (state.frame_cnt % 10 == 0) {
-        const seed: u64 = @intCast(std.time.nanoTimestamp());
-        var rng = std.rand.DefaultPrng.init(seed);
-
-        const x: f32 = rng.random().float(f32) * drawf.WIDTH;
-        const y: f32 = rng.random().float(f32) * drawf.HEIGHT;
-        var explosion = objectsf.Explosion.init(x, y);
-
-        try state.spawn_object(engine.Object{ .explosion = &explosion });
-    }
+    try state.update();
 
     try render(state.frame);
 }
@@ -64,26 +40,23 @@ pub fn main() !void {
 
     try term.set_raw_mode(true); // read single inputs
     defer {
-        _ = term.set_raw_mode(false) catch 0;
+        _ = term.set_raw_mode(false) catch null;
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
-    const allocator = arena.allocator();
-    const objects = std.ArrayList(engine.Object).init(allocator);
-
-    var frame = drawf.Frame.init();
-
-    var st = engine.State{ .objects = objects, .frame = &frame };
+    var st = try engine.State.init(arena.allocator());
     defer st.deinit();
 
-    const st_ptr: *engine.State = &st;
-
     // input thread
-    var input_thread = try std.Thread.spawn(.{}, input.input_thread_fn, .{st_ptr});
-    input_thread.detach();
+    var input_thread = try std.Thread.spawn(.{}, input.input_thread_fn, .{st});
+    defer input_thread.join();
 
     // game loop
-    while (st_ptr.active) try update(st_ptr);
+    while (st.active) {
+        std.time.sleep(60_000_000);
+
+        try update(st);
+    }
 }
