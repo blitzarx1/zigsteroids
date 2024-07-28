@@ -1,13 +1,16 @@
 const std = @import("std");
 const drawf = @import("draw.zig");
-const objectsf = @import("objects.zig");
+const objectsExplosionf = @import("objects/explosion.zig");
+const objectsPlayerf = @import("objects/player.zig");
+
+pub const Direction = enum { Left, Up, Right, Down };
 
 pub const State = struct {
     allocator: std.mem.Allocator,
 
     frame: *drawf.Frame,
 
-    player: *objectsf.Player,
+    player: *objectsPlayerf.Player,
     objects: std.ArrayList(Object),
 
     input: ?u8 = null,
@@ -21,10 +24,11 @@ pub const State = struct {
         const f = try allocator.create(drawf.Frame);
         f.* = drawf.Frame.init();
 
-        const p = try allocator.create(objectsf.Player);
-        p.* = objectsf.Player.init(
+        const p = try allocator.create(objectsPlayerf.Player);
+        p.* = try objectsPlayerf.Player.init(
             drawf.WIDTH / 2,
             drawf.HEIGHT / 2,
+            allocator,
         );
 
         const st = try allocator.create(State);
@@ -62,7 +66,6 @@ pub const State = struct {
         var i = self.objects.items.len - 1;
         while (true) {
             const obj = &self.objects.items[i];
-            std.debug.print("obj: {}", .{obj});
             if (obj.alive()) {
                 obj.draw(self.frame);
                 obj.update();
@@ -79,14 +82,18 @@ pub const State = struct {
         if (self.input) |key| {
             switch (key) {
                 'q' => self.active = false,
+                's' => self.player.set_dir(Direction.Down),
+                'a' => self.player.set_dir(Direction.Left),
+                'd' => self.player.set_dir(Direction.Right),
+                'w' => self.player.set_dir(Direction.Up),
                 ' ' => {
                     const seed: u64 = @intCast(std.time.nanoTimestamp());
                     var rng = std.rand.DefaultPrng.init(seed);
 
-                    const e = try self.allocator.create(objectsf.Explosion);
+                    const e = try self.allocator.create(objectsExplosionf.Explosion);
                     const x: f32 = rng.random().float(f32) * drawf.WIDTH;
                     const y: f32 = rng.random().float(f32) * drawf.HEIGHT;
-                    e.* = objectsf.Explosion.init(x, y);
+                    e.* = try objectsExplosionf.Explosion.init(x, y, self.allocator);
 
                     try self.spawn_object(Object{ .explosion = e });
                 },
@@ -122,8 +129,8 @@ pub const State = struct {
 };
 
 pub const Object = union(enum) {
-    player: *objectsf.Player,
-    explosion: *objectsf.Explosion,
+    player: *objectsPlayerf.Player,
+    explosion: *objectsExplosionf.Explosion,
 
     pub fn draw(self: Object, frame: *drawf.Frame) void {
         switch (self) {

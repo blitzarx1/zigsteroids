@@ -1,5 +1,4 @@
 const std = @import("std");
-const objectsfile = @import("objects.zig");
 const drawf = @import("draw.zig");
 const term = @import("term.zig");
 const input = @import("input.zig");

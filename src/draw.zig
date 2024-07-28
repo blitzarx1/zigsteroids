@@ -31,3 +31,27 @@ pub const Frame = struct {
         self.debug_offset = 0;
     }
 };
+
+pub const Sprite = struct {
+    ptr: *anyopaque,
+    impl: *const Interface,
+
+    pub const Interface = struct {
+        draw: *const fn (ctx: *anyopaque, x: f32, y: f32, frame: *Frame) void,
+        update: *const fn (ctx: *anyopaque) void,
+        active: *const fn (ctx: *anyopaque) bool,
+    };
+
+    pub fn draw(self: Sprite, x: f32, y: f32, frame: *Frame) void {
+        return self.impl.draw(self.ptr, x, y, frame);
+    }
+
+    pub fn update(self: Sprite) void {
+        return self.impl.update(self.ptr);
+    }
+
+    pub fn active(self: Sprite) bool {
+        return self.impl.active(self.ptr);
+    }
+};
+
