@@ -1,16 +1,18 @@
 const std = @import("std");
-const drawf = @import("draw.zig");
-const objectsExplosionf = @import("objects/explosion.zig");
-const objectsPlayerf = @import("objects/player.zig");
-
-pub const Direction = enum { Left, Up, Right, Down };
+const Frame = @import("../draw.zig").Frame;
+const WIDTH = @import("../draw.zig").WIDTH;
+const HEIGHT = @import("../draw.zig").HEIGHT;
+const Player = @import("../objects/player.zig").Player;
+const Explosion = @import("../objects/explosion.zig").Explosion;
+const Object = @import("types.zig").Object;
+const Direction = @import("types.zig").Direction;
 
 pub const State = struct {
     allocator: std.mem.Allocator,
 
-    frame: *drawf.Frame,
+    frame: *Frame,
 
-    player: *objectsPlayerf.Player,
+    player: *Player,
     objects: std.ArrayList(Object),
 
     input: ?u8 = null,
@@ -21,13 +23,13 @@ pub const State = struct {
     active: bool = true,
 
     pub fn init(allocator: std.mem.Allocator) !*State {
-        const f = try allocator.create(drawf.Frame);
-        f.* = drawf.Frame.init();
+        const f = try allocator.create(Frame);
+        f.* = Frame.init();
 
-        const p = try allocator.create(objectsPlayerf.Player);
-        p.* = try objectsPlayerf.Player.init(
-            drawf.WIDTH / 2,
-            drawf.HEIGHT / 2,
+        const p = try allocator.create(Player);
+        p.* = try Player.init(
+            WIDTH / 2,
+            HEIGHT / 2,
             allocator,
         );
 
@@ -90,10 +92,10 @@ pub const State = struct {
                     const seed: u64 = @intCast(std.time.nanoTimestamp());
                     var rng = std.rand.DefaultPrng.init(seed);
 
-                    const e = try self.allocator.create(objectsExplosionf.Explosion);
-                    const x: f32 = rng.random().float(f32) * drawf.WIDTH;
-                    const y: f32 = rng.random().float(f32) * drawf.HEIGHT;
-                    e.* = try objectsExplosionf.Explosion.init(x, y, self.allocator);
+                    const e = try self.allocator.create(Explosion);
+                    const x: f32 = rng.random().float(f32) * WIDTH;
+                    const y: f32 = rng.random().float(f32) * HEIGHT;
+                    e.* = try Explosion.init(x, y, self.allocator);
 
                     try self.spawn_object(Object{ .explosion = e });
                 },
@@ -124,29 +126,6 @@ pub const State = struct {
 
             self.frames_since = 0;
             self.last_second = now;
-        }
-    }
-};
-
-pub const Object = union(enum) {
-    player: *objectsPlayerf.Player,
-    explosion: *objectsExplosionf.Explosion,
-
-    pub fn draw(self: Object, frame: *drawf.Frame) void {
-        switch (self) {
-            inline else => |obj| return obj.draw(frame),
-        }
-    }
-
-    pub fn update(self: Object) void {
-        switch (self) {
-            inline else => |obj| return obj.update(),
-        }
-    }
-
-    pub fn alive(self: Object) bool {
-        switch (self) {
-            inline else => |obj| return obj.alive(),
         }
     }
 };

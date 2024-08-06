@@ -1,5 +1,6 @@
 const std = @import("std");
-const drawf = @import("../draw.zig");
+const Sprite = @import("../draw.zig").Sprite;
+const Frame = @import("../draw.zig").Frame;
 
 pub const Explosion = struct {
     frames: [6][5][5]u21 = [6][5][5]u21{
@@ -53,8 +54,8 @@ pub const Explosion = struct {
         return .{};
     }
 
-    pub fn create(self: *Explosion) drawf.Sprite {
-        return drawf.Sprite{
+    pub fn create(self: *Explosion) Sprite {
+        return Sprite{
             .ptr = self,
             .impl = &.{ .update = update, .active = active, .draw = draw },
         };
@@ -72,7 +73,7 @@ pub const Explosion = struct {
         return self.frame_i < self.frames.len;
     }
 
-    pub fn draw(ctx: *anyopaque, x: f32, y: f32, f: *drawf.Frame) void {
+    pub fn draw(ctx: *anyopaque, x: f32, y: f32, f: *Frame) void {
         const self: *Explosion = @ptrCast(@alignCast(ctx));
 
         const tex_x: u8 = @intFromFloat(x);

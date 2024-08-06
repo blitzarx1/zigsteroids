@@ -1,7 +1,7 @@
 const std = @import("std");
-const engine = @import("engine.zig");
+const State = @import("engine/state.zig").State;
 
-pub fn input_thread_fn(s: *engine.State) void {
+pub fn input_thread_fn(s: *State) void {
     const stdin = std.io.getStdIn().reader();
     var buf: [1]u8 = undefined;
 

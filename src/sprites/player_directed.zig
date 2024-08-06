@@ -1,4 +1,5 @@
-const drawf = @import("../draw.zig");
+const Sprite = @import("../draw.zig").Sprite;
+const Frame = @import("../draw.zig").Frame;
 
 pub const PlayerDirected = struct {
     variants: [4][1][1]u21 = [4][1][1]u21{
@@ -13,8 +14,8 @@ pub const PlayerDirected = struct {
         return .{ .variant = variant };
     }
 
-    pub fn create(self: *PlayerDirected) drawf.Sprite {
-        return drawf.Sprite{
+    pub fn create(self: *PlayerDirected) Sprite {
+        return Sprite{
             .ptr = self,
             .impl = &.{ .update = update, .active = active, .draw = draw },
         };
@@ -26,7 +27,7 @@ pub const PlayerDirected = struct {
         return true;
     }
 
-    pub fn draw(ctx: *anyopaque, x: f32, y: f32, f: *drawf.Frame) void {
+    pub fn draw(ctx: *anyopaque, x: f32, y: f32, f: *Frame) void {
         const self: *PlayerDirected = @ptrCast(@alignCast(ctx));
 
         const tex_x: u8 = @intFromFloat(x);

@@ -2,7 +2,7 @@ const std = @import("std");
 const drawf = @import("draw.zig");
 const term = @import("term.zig");
 const input = @import("input.zig");
-const engine = @import("engine.zig");
+const State = @import("engine/state.zig").State;
 
 fn render(frame: *const drawf.Frame) !void {
     const stdout_file = std.io.getStdOut().writer();
@@ -27,7 +27,7 @@ fn render(frame: *const drawf.Frame) !void {
     try bw.flush();
 }
 
-pub fn update(state: *engine.State) !void {
+pub fn update(state: *State) !void {
     try state.update();
 
     try render(state.frame);
@@ -45,7 +45,7 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
-    var st = try engine.State.init(arena.allocator());
+    var st = try State.init(arena.allocator());
     defer st.deinit();
 
     // input thread

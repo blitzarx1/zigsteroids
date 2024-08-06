@@ -1,20 +1,21 @@
 const std = @import("std");
-const drawf = @import("../draw.zig");
-const spritef = @import("../sprites/explosion.zig");
+const Sprite = @import("../draw.zig").Sprite;
+const Frame = @import("../draw.zig").Frame;
+const ExplosionSprite = @import("../sprites/explosion.zig").Explosion;
 
 pub const Explosion = struct {
     x: f32,
     y: f32,
     allocator: std.mem.Allocator,
-    sprites: std.ArrayList(drawf.Sprite),
+    sprites: std.ArrayList(Sprite),
     is_alive: bool,
 
     pub fn init(x: f32, y: f32, allocator: std.mem.Allocator) !Explosion {
-        const explSprite = try allocator.create(spritef.Explosion);
-        explSprite.* = spritef.Explosion.init();
-        const sprite = spritef.Explosion.create(explSprite);
+        const explSprite = try allocator.create(ExplosionSprite);
+        explSprite.* = ExplosionSprite.init();
+        const sprite = ExplosionSprite.create(explSprite);
 
-        var sprites = std.ArrayList(drawf.Sprite).init(allocator);
+        var sprites = std.ArrayList(Sprite).init(allocator);
         try sprites.append(sprite);
 
         return .{
@@ -46,7 +47,7 @@ pub const Explosion = struct {
         }
     }
 
-    pub fn draw(self: *Explosion, f: *drawf.Frame) void {
+    pub fn draw(self: *Explosion, f: *Frame) void {
         for (self.sprites.items) |sprite| {
             sprite.draw(self.x, self.y, f);
         }
